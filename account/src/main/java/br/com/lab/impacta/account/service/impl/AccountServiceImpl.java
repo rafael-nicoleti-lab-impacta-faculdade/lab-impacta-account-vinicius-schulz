@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import br.com.lab.impacta.account.handler.exception.AccountDontExistsException;
+import br.com.lab.impacta.account.handler.exception.AccountWithoutBalanceException;
 import br.com.lab.impacta.account.model.Account;
 import br.com.lab.impacta.account.repository.AccountRepository;
 import br.com.lab.impacta.account.service.AccountService;
@@ -24,6 +25,9 @@ public class AccountServiceImpl implements AccountService {
 
 	@Value("${lab.account.exceptions.account-without-balance-message}")
 	private String messageExceptionAccountWithoudBalanceMessage;
+
+	@Value("${lab.account.exceptions.account-without-balance-description}")
+	private String accountWithoutBalanceDescription;
 
 	@Autowired
 	public AccountServiceImpl(AccountRepository accountRepository) {
@@ -45,6 +49,16 @@ public class AccountServiceImpl implements AccountService {
 
 	@Override
 	public void debitAccount(Long accountId, Double valueOfDebit) {
+		Account account = this.findAccount(accountId);
+
+		boolean debited = account.debit(valueOfDebit);
+
+		if (!debited) {
+			throw new AccountWithoutBalanceException(messageExceptionAccountWithoudBalanceMessage,
+					accountWithoutBalanceDescription);
+		}
+
+		accountRepository.save(account);
 
 	}
 
